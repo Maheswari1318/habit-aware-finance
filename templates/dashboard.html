@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <div class="success-msg">
+      {{ messages[0] }}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<!-- ================= HERO BANNER ================= -->
+<div class="hero-banner">
+    <h2>Welcome back 👋</h2>
+    <p>
+        Track today’s spending, stay within budget,
+        and build better money habits.
+    </p>
+</div>
+
+<!-- ================= ACTIONS ================= -->
+<div class="dashboard-actions">
+    <a href="{{ url_for('clear_expenses') }}"
+       onclick="return confirm('Are you sure you want to clear all expenses?')">
+        <button class="danger-btn">Clear All</button>
+    </a>
+</div>
+
+<!-- ================= BUDGET UPDATE ================= -->
+<div class="budget-box">
+    <h3>Update Monthly Budget (₹)</h3>
+
+    <form action="{{ url_for('update_budget') }}" method="post" class="budget-form">
+        <input
+            type="number"
+            name="budget"
+            value="{{ user_budget }}"
+            required
+        >
+        <button type="submit" class="primary">Update</button>
+    </form>
+</div>
+
+<div class="card" style="margin-bottom:20px;">
+    <h4>Set Daily Limit (₹)</h4>
+
+    <form action="/set-daily-limit" method="post" style="display:flex; gap:10px;">
+        <input
+            type="number"
+            name="daily_limit"
+            placeholder="e.g. 500"
+            required
+        >
+        <button type="submit">Set</button>
+    </form>
+</div>
+
+<!-- ================= DAILY BUDGET INDICATOR ================= -->
+<div class="card">
+    <h4>Daily Budget Status</h4>
+
+    <p><b>Daily Limit:</b> ₹{{ daily_limit }}</p>
+    <p><b>Today Spent:</b> ₹{{ today_spent }}</p>
+
+    <div class="progress-wrapper">
+    <div
+        class="progress-bar
+        {% if percent < 60 %}
+            green
+        {% elif percent < 90 %}
+            orange
+        {% else %}
+            red
+        {% endif %}"
+        style="width: {{ percent if percent > 3 else 3 }}%;">
+        {{ percent }}%
+    </div>
+</div>
+
+<!-- ================= SUMMARY CARDS ================= -->
+<div class="cards">
+    <div class="card">
+        <h4>Total Spent</h4>
+        <p>₹{{ total }}</p>
+    </div>
+
+    <div class="card">
+        <h4>Budget Status</h4>
+        <p>{{ budget }}</p>
+    </div>
+
+    <div class="card">
+        <h4>Main Reason</h4>
+        <p>{{ reason }}</p>
+    </div>
+</div>
+
+<!-- ================= EMPTY STATE ================= -->
+{% if category_data|length == 0 %}
+    <div class="empty">
+        No expenses added yet. Please add expenses to see insights 📊
+    </div>
+{% else %}
+
+<!-- ================= CHARTS ================= -->
+<div class="charts">
+    <div class="chart-box">
+        <h3>Category-wise Spending</h3>
+        <canvas id="pieChart"></canvas>
+    </div>
+
+    <div class="chart-box">
+        <h3>Daily Spending Trend</h3>
+        <canvas id="barChart"></canvas>
+    </div>
+</div>
+
+{% endif %}
+
+<!-- ================= CHART.JS SCRIPT ================= -->
+<script>
+const categoryData = {{ category_data | tojson }};
+const dailyData = {{ daily_data | tojson }};
+
+if (categoryData.length > 0) {
+    new Chart(document.getElementById("pieChart"), {
+        type: "pie",
+        data: {
+            labels: categoryData.map(item => item[0]),
+            datasets: [{
+                data: categoryData.map(item => item[1]),
+                backgroundColor: [
+                    "#4b7bec",
+                    "#ff7675",
+                    "#feca57",
+                    "#1dd1a1"
+                ]
+            }]
+        }
+    });
+}
+
+if (dailyData.length > 0) {
+    new Chart(document.getElementById("barChart"), {
+        type: "bar",
+        data: {
+            labels: dailyData.map(item => item[0]),
+            datasets: [{
+                data: dailyData.map(item => item[1]),
+                backgroundColor: "#74b9ff"
+            }]
+        },
+        options: {
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+}
+</script>
+
+{% endblock %}

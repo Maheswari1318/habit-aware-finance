@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card auth-card">
+    <h2>Create Your Account ✨</h2>
+    <p style="color:#6b7280; margin-bottom:20px;">
+        Start tracking your spending habits
+    </p>
+
+    <form method="post">
+        <label>Username</label>
+        <input type="text" name="username" placeholder="Choose a username" required>
+
+        <label>Password</label>
+        <input type="password" name="password" placeholder="Create a password" required>
+
+        <label>Monthly Budget (₹)</label>
+        <input type="number" name="budget" placeholder="e.g. 15000" required>
+
+        <button type="submit" class="primary" style="margin-top:16px;">
+            Create Account
+        </button>
+    </form>
+
+    <p style="text-align:center; margin-top:18px; font-size:14px;">
+        Already have an account?
+        <a href="/login" style="color:#4b7bec; font-weight:600;">
+            Login
+        </a>
+    </p>
+</div>
+
+{% endblock %}
