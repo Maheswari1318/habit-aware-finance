@@ -1,3 +1,4 @@
+```python
 import os
 import sqlite3
 from datetime import datetime
@@ -23,17 +24,15 @@ from logic import budget_prediction, top_reason
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "fallback_secret")
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-
 # ================= DATABASE =================
 
-# ================= DATABASE =================
 def get_db():
 
     db_path = "/tmp/expenses.db"
 
-    return sqlite3.connect(db_path)
+    conn = sqlite3.connect(db_path)
+
+    return conn
 
 
 def init_db():
@@ -41,6 +40,7 @@ def init_db():
     conn = get_db()
     cur = conn.cursor()
 
+    # USERS TABLE
     cur.execute("""
     CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -50,10 +50,28 @@ def init_db():
     )
     """)
 
+    # EXPENSES TABLE
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS expenses (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        date TEXT,
+        time TEXT,
+        amount REAL,
+        category TEXT,
+        reason TEXT
+    )
+    """)
+
+    conn.commit()
+    conn.close()
+
+
 # ================= LANDING PAGE =================
 
 @app.route("/")
 def landing():
+
     if "user_id" in session:
         return redirect("/dashboard")
 
@@ -87,6 +105,7 @@ def login():
         )
 
         user = cur.fetchone()
+
         conn.close()
 
         if user and check_password_hash(user[1], password):
@@ -116,7 +135,9 @@ def signup():
         budget = request.form.get("budget")
 
         if not username or not raw_password or not budget:
+
             flash("Please fill all fields")
+
             return redirect("/signup")
 
         password = generate_password_hash(raw_password)
@@ -139,6 +160,7 @@ def signup():
             conn.close()
 
             flash("Account created successfully ✅")
+
             return redirect("/login")
 
         except sqlite3.IntegrityError:
@@ -167,6 +189,7 @@ def dashboard():
         return redirect("/login")
 
     user_id = session["user_id"]
+
     user_budget = int(session["budget"])
 
     daily_limit = session.get("daily_limit", 0)
@@ -174,7 +197,7 @@ def dashboard():
     conn = get_db()
     cur = conn.cursor()
 
-    # Category chart data
+    # CATEGORY DATA
     cur.execute(
         """
         SELECT category, SUM(amount)
@@ -187,7 +210,7 @@ def dashboard():
 
     category_data = cur.fetchall()
 
-    # Daily chart data
+    # DAILY DATA
     cur.execute(
         """
         SELECT date, SUM(amount)
@@ -200,7 +223,7 @@ def dashboard():
 
     daily_data = cur.fetchall()
 
-    # Reasons
+    # REASONS
     cur.execute(
         """
         SELECT reason
@@ -212,7 +235,7 @@ def dashboard():
 
     reasons = [r[0] for r in cur.fetchall()]
 
-    # Total expense
+    # TOTAL EXPENSE
     cur.execute(
         """
         SELECT SUM(amount)
@@ -224,7 +247,7 @@ def dashboard():
 
     total = cur.fetchone()[0] or 0
 
-    # Total days
+    # TOTAL DAYS
     cur.execute(
         """
         SELECT DISTINCT date
@@ -236,7 +259,7 @@ def dashboard():
 
     days = len(cur.fetchall())
 
-    # Today's spending
+    # TODAY'S SPENDING
     today = datetime.now().strftime("%Y-%m-%d")
 
     cur.execute(
@@ -252,7 +275,7 @@ def dashboard():
 
     conn.close()
 
-    # Daily limit percentage
+    # DAILY LIMIT %
     percent = (
         (today_spent / daily_limit) * 100
         if daily_limit > 0 else 0
@@ -260,7 +283,7 @@ def dashboard():
 
     percent = min(percent, 100)
 
-    # Budget prediction
+    # BUDGET PREDICTION
     budget_status = budget_prediction(
         total,
         days,
@@ -298,14 +321,18 @@ def add_expense():
         reason = request.form.get("reason")
 
         if not expense_date or not amount or not category:
+
             flash("Please fill required fields")
+
             return redirect("/add")
 
         try:
             amount = float(amount)
 
         except ValueError:
+
             flash("Enter valid amount")
+
             return redirect("/add")
 
         conn = get_db()
@@ -348,14 +375,18 @@ def update_budget():
     new_budget = request.form.get("budget")
 
     if not new_budget:
+
         flash("Enter budget amount")
+
         return redirect("/dashboard")
 
     try:
         new_budget = int(new_budget)
 
     except ValueError:
+
         flash("Enter valid budget")
+
         return redirect("/dashboard")
 
     user_id = session["user_id"]
@@ -438,8 +469,13 @@ def set_daily_limit():
     return redirect("/dashboard")
 
 
-# ================= RUN APP =================
+# ================= INITIALIZE DATABASE =================
+
 init_db()
+
+
+# ================= RUN APP =================
 
 if __name__ == "__main__":
     app.run(debug=True)
+```
