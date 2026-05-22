@@ -28,9 +28,34 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # ================= DATABASE =================
 
-def get_db():
-    db_path = os.path.join(BASE_DIR, "data", "expenses.db")
-    return sqlite3.connect(db_path)
+def init_db():
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE,
+        password TEXT,
+        monthly_budget INTEGER
+    )
+    """)
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS expenses (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        date TEXT,
+        time TEXT,
+        amount REAL,
+        category TEXT,
+        reason TEXT
+    )
+    """)
+
+    conn.commit()
+    conn.close()
 
 
 # ================= LANDING PAGE =================
@@ -422,6 +447,7 @@ def set_daily_limit():
 
 
 # ================= RUN APP =================
+init_db()
 
 if __name__ == "__main__":
     app.run(debug=True)
