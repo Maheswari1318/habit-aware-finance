@@ -29,9 +29,10 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # ================= DATABASE =================
 
 # ================= DATABASE =================
-
 def get_db():
-    db_path = os.path.join(BASE_DIR, "data", "expenses.db")
+
+    db_path = "/tmp/expenses.db"
+
     return sqlite3.connect(db_path)
 
 
